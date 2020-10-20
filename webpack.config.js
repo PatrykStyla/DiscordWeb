@@ -7,6 +7,10 @@ module.exports = {
     path: path.join(__dirname, '/dist'),
     filename: 'bundle.js'
   },
+  devServer: {
+    contentBase: "dist",
+    overlay: true
+  },
   // ...you'll probably need to configure the usual Webpack fields like "mode" and "entry", too.
   resolve: { 
     extensions: [".ts", ".tsx", ".js", ".jsx"],
@@ -43,10 +47,10 @@ module.exports = {
       }
     ]
   },
-  plugins: [
-    new HtmlWebpackPlugin({
-      template: './src/index.html'
-    })
-  ],
+  // plugins: [
+  //   new HtmlWebpackPlugin({
+  //     template: './index.html'
+  //   })
+  // ],
   devtool: 'inline-source-map'
 };
