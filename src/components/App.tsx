@@ -1,6 +1,13 @@
 import { hot } from 'react-hot-loader';
 import React from 'react';
 import url from 'url';
+import {
+	BrowserRouter as Router,
+	Switch,
+	Route,
+	Link
+} from "react-router-dom";
+
 
 // import DB from '/home/tulipan/DiscordBotJS/src/DB/DB'
 
@@ -16,7 +23,7 @@ window.addEventListener("message", (e) => {
 	}
 	// Discord call sucesfull
 	if (e.data.success === 1) {
-		console.log('Succ')	
+		console.log('Succ')
 
 		const c = url.parse(a.location.href, true)
 		if (c.query.code) {
@@ -30,29 +37,50 @@ window.addEventListener("message", (e) => {
 		// do nothing
 	}
 })
+// return (
+// 	<div>
+// 		<button onClick={this.HandleLogin}>LOG IN</button>
+// 	</div>
+// );
 
-class App extends React.PureComponent {
-	HandleLogin = () => {
-		a = window.open('https://discord.com/api/oauth2/authorize?client_id=719720108808994917&redirect_uri=https%3A%2F%2Fdiscord.patrykstyla.com%2Fapi%2Fdiscord-login&response_type=code&scope=email%20identify%20guilds','popup','width=500,height=800')!;
-	}
 
-	handleLogin2 = (e: any) => {
-		e.PreventDefault()
-		window.open('http://www.google.com','popup','width=600,height=600');
-	}
-	render() {
-		return (
+// HandleLogin = () => {
+// 	a = window.open('https://discord.com/api/oauth2/authorize?client_id=719720108808994917&redirect_uri=https%3A%2F%2Fdiscord.patrykstyla.com%2Fapi%2Fdiscord-login&response_type=code&scope=email%20identify%20guilds', 'popup', 'width=500,height=800')!;
+// }
+function App() {
+	return (
+		<Router>
 			<div>
-				<button onClick={this.HandleLogin}>LOGIN</button>
-				<a href="http://www.google.com"
-					target="popup"
-					onClick={this.handleLogin2}>
-					Link Text goes here...
-					jhgjkhg
-				</a>
+				<nav>
+					<ul>
+						<li>
+							<Link to="/">Home</Link>
+						</li>
+						<li>
+							<Link to="/about">About</Link>
+						</li>
+						<li>
+							<Link to="/users">Users</Link>
+						</li>
+					</ul>
+				</nav>
+
+				{/* A <Switch> looks through its children <Route>s and
+            renders the first one that matches the current URL. */}
+				<Switch>
+					<Route path="/about">
+						{/* <About /> */}
+					</Route>
+					<Route path="/users">
+						{/* <Users /> */}
+					</Route>
+					<Route path="/">
+						{/* <Home /> */}
+					</Route>
+				</Switch>
 			</div>
-		);
-	}
+		</Router>
+	)
 }
 
-export default hot(module)(App);
+export default hot(module)(App); 
