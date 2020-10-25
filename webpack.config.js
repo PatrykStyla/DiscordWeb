@@ -8,15 +8,24 @@ const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 
 module.exports = {
   entry: [
+    'webpack-dev-server/client?https://discord.patrykstyla.com:8080',
     './src/index',
     // './public/css/main.css'
   ],
   output: {
     path: path.join(__dirname, '/dist'),
-    // publicPath: 'http://localhost:9000/dist',
+    publicPath: 'https://discord.patrykstyla.com:8080/',
     filename: 'bundle.js'
   },
   devServer: {    
+    headers: {"Access-Control-Allow-Origin": "*"},
+    host: 'discord.patrykstyla.com',
+    https: true,
+    key: fs.readFileSync('/etc/letsencrypt/live/discord.patrykstyla.com/privkey.pem'),
+    cert: fs.readFileSync('/etc/letsencrypt/live/discord.patrykstyla.com/fullchain.pem'),
+    proxy: {
+      '/' : 'https://discord.patrykstyla.com'
+    },
     overlay: true,
     historyApiFallback: true,
     stats: {
@@ -99,7 +108,7 @@ module.exports = {
   },
   plugins: [
     new HtmlWebpackPlugin({
-      template: './index.html'
+      template: 'dist/index.html'
     }),
     new MiniCssExtractPlugin(),
     // new WebpackAnalyzer()
