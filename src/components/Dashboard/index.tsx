@@ -10,14 +10,12 @@ import {
 } from "react-router-dom";
 
 export function Dashboard() {
-	let { id } = useParams<{ id: string }>()
+	let { guild_id } = useParams<{ guild_id: string }>()
 	let history = useHistory();
 	function GoToLogs() {
 		console.log(history)
 		history.push(`${history.location.pathname}/logs`)
 	}
-
-	console.log(id)
 	return (
 		<div>
 			<div onClick={GoToLogs}>Chat Logs</div>

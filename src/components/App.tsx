@@ -49,7 +49,8 @@ function GuildElement(props: {guild_id: string}) {
 }
 
 function App() {
-	const [user, setUser] = useState<{guild_id: string, permissions: number, icon: number, name: string}[] | null>(null)
+	const [user, setUser] = useState<{guild_id: string, permissions: number, icon: number, name: string}[] | null>(null)	
+	const [a, setA] = useState<string | null>(null)
 
 	useEffect(() => {
 		fetch('/api/users/@me')
@@ -76,11 +77,11 @@ function App() {
 				<Route exact path="/">
 					{Guilds}
 				</Route>
-				<Route exact path="/server/:id">
+				<Route exact path="/server/:guild_id">
 					{/* User selected a guild. Show a dashboard */}
 					<Dashboard/>
 				</Route>
-				<Route exact path="/server/:id/logs">
+				<Route exact path="/server/:guild_id/logs">
 					<GuildLogs />
 				</Route>
 				<Route path="/server">

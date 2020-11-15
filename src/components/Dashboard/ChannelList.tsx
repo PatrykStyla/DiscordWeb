@@ -104,7 +104,6 @@ export function ChannelList(props: { Channels: TChannels[], setChatLogs: React.D
 			console.log(result)
 		})
 		setSelectedID(index)
-		
 	}
 	
 	let prevName = ""
