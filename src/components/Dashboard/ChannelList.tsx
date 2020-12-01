@@ -10,56 +10,53 @@ import {
 	useParams
 } from "react-router-dom";
 
-export function CategoryChannel(props: {Channel: ICategoryChannel, isSelected: string, HandleClick: (element: string) => void }) {
+export function CategoryChannel(props: {Channel: ICategoryChannel, isSelected: string | null, HandleClick: (index: string, type: 'text' | 'voice' | 'category' | 'dm' | 'store' | 'news') => void }) {
 	return (
-		<div className={`${props.isSelected === props.Channel.channel_id ? "bg-red-500" : ""}`} 
-			onClick={() => { props.HandleClick(props.Channel.channel_id)} }>{props.Channel.name} 
+		<div className={`${props.isSelected === props.Channel.channel_id ? "bg-red-500" : ""} truncate`} 
+			onClick={() => { props.HandleClick(props.Channel.channel_id, props.Channel.types)} }>{props.Channel.name} 
 		</div>
 	)
 }
 
-export function TextChannel(props: {Channel: ITextChannel, isSelected: string, HandleClick: (element: string) => void }) {
+export function TextChannel(props: {Channel: ITextChannel, isSelected: string | null, HandleClick: (index: string, type: 'text' | 'voice' | 'category' | 'dm' | 'store' | 'news') => void }) {
 	return (
-		<div className={`${props.isSelected === props.Channel.channel_id ? "bg-red-500" : ""}`} 
-			onClick={() => { props.HandleClick(props.Channel.channel_id)} }>{props.Channel.name} 
+		<div className={`${props.isSelected === props.Channel.channel_id ? "bg-red-500" : ""} truncate`} 
+			onClick={() => { props.HandleClick(props.Channel.channel_id, props.Channel.types)} }>{props.Channel.name} 
 		</div>
 	)
 }
 
-export function VoiceChannel(props: {Channel: IVoiceChannel, isSelected: string, HandleClick: (element: string) => void }) {
+export function VoiceChannel(props: {Channel: IVoiceChannel, isSelected: string | null, HandleClick: (index: string, type: 'text' | 'voice' | 'category' | 'dm' | 'store' | 'news') => void }) {
 	return (
-		<div className={`${props.isSelected === props.Channel.channel_id ? "bg-red-500" : ""}`} 
-			onClick={() => { props.HandleClick(props.Channel.channel_id)} }>{props.Channel.name} 
+		<div className={`${props.isSelected === props.Channel.channel_id ? "bg-red-500" : ""} truncate`} 
+			onClick={() => { props.HandleClick(props.Channel.channel_id, props.Channel.types)} }>{props.Channel.name} 
 		</div>
 	)
 }
 
-export function StoreChannel(props: {Channel: IStoreChannel, isSelected: string, HandleClick: (element: string) => void }) {
+export function StoreChannel(props: {Channel: IStoreChannel, isSelected: string | null, HandleClick: (index: string, type: 'text' | 'voice' | 'category' | 'dm' | 'store' | 'news') => void }) {
 	return (
-		<div className={`${props.isSelected === props.Channel.channel_id ? "bg-red-500" : ""}`} 
-			onClick={() => { props.HandleClick(props.Channel.channel_id)} }>{props.Channel.name} 
+		<div className={`${props.isSelected === props.Channel.channel_id ? "bg-red-500" : ""} truncate`} 
+			onClick={() => { props.HandleClick(props.Channel.channel_id, props.Channel.types)} }>{props.Channel.name} 
 		</div>
 	)
 }
 
-export function NewsChannel(props: {Channel: INewsChannel, isSelected: string, HandleClick: (element: string) => void }) {
+export function NewsChannel(props: {Channel: INewsChannel, isSelected: string | null, HandleClick: (index: string, type: 'text' | 'voice' | 'category' | 'dm' | 'store' | 'news') => void }) {
 	return (
-		<div className={`${props.isSelected === props.Channel.channel_id ? "bg-red-500" : ""}`} 
-			onClick={() => { props.HandleClick(props.Channel.channel_id)} }>{props.Channel.name} 
+		<div className={`${props.isSelected === props.Channel.channel_id ? "bg-red-500" : ""} truncate`} 
+			onClick={() => { props.HandleClick(props.Channel.channel_id, props.Channel.types)} }>{props.Channel.name} 
 		</div>
 	)
 }
 
-export function ChannelWrapper() {
-	
-}
-
-
-export function ChannelList(props: { Channels: TChannels[], setChatLogs: React.Dispatch<React.SetStateAction<ChannelMessage[]>> }) {
+export function ChannelList(props: { Channels: TChannels[], selectedChannel: { id: string | null; type: string | null; }, setSelectedChannel:  React.Dispatch<React.SetStateAction<{
+    id: string | null;
+    type: 'text' | 'voice' | 'category' | 'dm' | 'store' | 'news' | null;
+}>>}) {
 	let Channels: JSX.Element[] = []
 	const ChannelMaps = new Map<string, TChannels>()
 	const sorted = props.Channels.sort((a, b) => a.position - b.position)
-	let [SelectedID, setSelectedID] = useState("");
 
 	sorted.forEach((element) => {
 		ChannelMaps.set(element.channel_id, element);
@@ -94,31 +91,26 @@ export function ChannelList(props: { Channels: TChannels[], setChatLogs: React.D
 	}
 
 
-	const HandleSelect = (index: string) => {
-		fetch(`/api/channels/${index}/messages`, {
-			method: 'GET',
-		})
-		.then(res => res.json())
-		.then((result: any) => {
-			props.setChatLogs(result);
-			console.log(result)
-		})
-		setSelectedID(index)
+	const HandleSelect = (index: string, type: 'text' | 'voice' | 'category' | 'dm' | 'store' | 'news') => {
+		props.setSelectedChannel({id: index, type: type})
+		// Set the result in local storage
+		window.localStorage.setItem("SelectedChannelId", index);
+		window.localStorage.setItem("SelectedChannelType", type);
 	}
 	
 	let prevName = ""
 	CategoryChannels.forEach((value, key) => {
 		value.forEach((value) => {
 			if (value.types === "category") {
-				Channels.push(<CategoryChannel isSelected={SelectedID} HandleClick={HandleSelect} key={value.channel_id} Channel={value} />)
+				Channels.push(<CategoryChannel isSelected={props.selectedChannel.id} HandleClick={HandleSelect} key={value.channel_id} Channel={value} />)
 			} else if (value.types === "text") {
-				Channels.push(<TextChannel isSelected={SelectedID} HandleClick={HandleSelect} key={value.channel_id} Channel={value} />)
+				Channels.push(<TextChannel isSelected={props.selectedChannel.id} HandleClick={HandleSelect} key={value.channel_id} Channel={value} />)
 			} else if (value.types === "voice") {
-				Channels.push(<VoiceChannel isSelected={SelectedID} HandleClick={HandleSelect} key={value.channel_id} Channel={value} />)
+				Channels.push(<VoiceChannel isSelected={props.selectedChannel.id} HandleClick={HandleSelect} key={value.channel_id} Channel={value} />)
 			} else if (value.types === "store") {
-				Channels.push(<StoreChannel isSelected={SelectedID} HandleClick={HandleSelect} key={value.channel_id} Channel={value} />)
+				Channels.push(<StoreChannel isSelected={props.selectedChannel.id} HandleClick={HandleSelect} key={value.channel_id} Channel={value} />)
 			} else if (value.types === "news") {
-				Channels.push(<NewsChannel isSelected={SelectedID} HandleClick={HandleSelect} key={value.channel_id} Channel={value} />)
+				Channels.push(<NewsChannel isSelected={props.selectedChannel.id} HandleClick={HandleSelect} key={value.channel_id} Channel={value} />)
 			}
 			// Channels.push(<IndividualChannel isSelected={SelectedID} HandleClick={HandleSelect} key={value.channel_id} Channel={value} />)
 		})
@@ -127,7 +119,7 @@ export function ChannelList(props: { Channels: TChannels[], setChatLogs: React.D
 
 	return (
 		<>
-			<div className="select-none" /**onClick={(e) => {console.log(e.target)}}*/>
+			<div className="select-none w-full" /**onClick={(e) => {console.log(e.target)}}*/>
 				{Channels}
 			</div>
 		</>
