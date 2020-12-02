@@ -10,7 +10,9 @@ import {
 } from "react-router-dom";
 import { ChannelList } from './ChannelList';
 import { IBotMessage, IMessageDeletePayload, IMessagePayload, IMessageTypeEnum } from '../../components/Interfaces';
-import {unstable_trace as trace} from 'scheduler/tracing'
+import { Map } from 'immutable'
+import { MutateMapArray } from '../../components/Misc/helper';
+
 export function GuildLogs() {
 	const [channelsID, setChannelsID] = useState<TChannels[] | null>(null);
 	const { guild_id } = useParams<{ guild_id: string }>()
@@ -18,11 +20,11 @@ export function GuildLogs() {
 		({ id: window.localStorage.getItem("SelectedChannelId") ? window.localStorage.getItem("SelectedChannelId") : null,
 		   type: window.localStorage.getItem("SelectedChannelType") as any ? window.localStorage.getItem("SelectedChannelType") as any : null});
 	// Some state to save the messages of all channels after they have been loaded.
-	const [ChannelMessages, SetChannelMessages] = useState<Map<string,ChannelMessage[] | null>>(new Map());
+	const [ChannelMessages, SetChannelMessages] = useState<Map<string,ChannelMessage[] | null>>(Map());
 	const ws = useRef<WebSocket | null>(null);
 
     const ChannelRef = useRef<HTMLDivElement[] | null[]>([null]);
-    const ChannelRefMap = useRef<Map<string,HTMLDivElement | null>>(new Map());
+    const ChannelRefMap = useRef<Map<string,HTMLDivElement | null>>(Map());
 
 	useEffect(() => {
 		let KeepAlive: NodeJS.Timeout
@@ -86,13 +88,8 @@ export function GuildLogs() {
 		
 	},[ChannelMessages, SelectedID])
 	const DeleteMessage = (payload: IMessageDeletePayload) => {
-		// SetChannelMessages((messages) => ({ ...messages,
-		// 	[payload.channel_id]: [...messages[payload.channel_id]!,
-		// 	[...messages[payload.channel_id]!].find(message => message.id === payload.id)!.is_deleted = true]} as any))
-		// 	const c = ChannelMessages.get(payload.channel_id)!
-		// const a = ChannelMessages.get(payload.channel_id)!.find(message => message.id === payload.id)!
-		SetChannelMessages(ChannelMessages.set(payload.channel_id, [ChannelMessages.get(payload.channel_id)!.find(message => message.id === payload.id)!]) )
-
+		// Mutate a single property value
+		MutateMapArray(SetChannelMessages, ChannelMessages, payload, "is_deleted")
 	}
 	Math.floor
 	const AddMessage = (payload: IMessagePayload) => {
@@ -101,7 +98,7 @@ export function GuildLogs() {
 		if (ChannelMessages.get(payload.channel_id)) {
 			// TODO: proper interface
 			// SetChannelMessages((messages) => ({ ...messages, [payload.channel_id]: [...messages[payload.channel_id]!, (payload as any)]}))
-			SetChannelMessages(new Map(ChannelMessages.set(payload.channel_id, [...ChannelMessages.get(payload.channel_id)!, payload as any])))
+			SetChannelMessages(ChannelMessages.set(payload.channel_id, [...ChannelMessages.get(payload.channel_id)!, payload as any]))
 
 		} else {
 			// Channel was not loaded. Do not add the message
@@ -128,8 +125,6 @@ export function GuildLogs() {
 	useEffect(() => {
 
 	})
-
-
 	if (channelsID) {
 		return (
 			<div className="flex">
@@ -140,7 +135,7 @@ export function GuildLogs() {
 				<div className="flex flex-1">
 					<TextChannelSelected ChannelRefMap={ChannelRefMap} selectedChannel={SelectedID} ChannelMessages={ChannelMessages} SetChannelMessages={SetChannelMessages} />
 				</div>
-				<button onClick={() => {console.log(ChannelRefMap.current)}}>CLICK</button>
+				<button onClick={() => {console.log(ChannelRefMap.current.get("783148053426339861")!)}}>CLICK</button>
 			</div>
 		)
 	} else {
@@ -233,10 +228,10 @@ export function TextChannelSelected(props:{ selectedChannel:{
 				.then((result: ChannelMessage[]) => {
 					// Set empty results as null
 					if (result.length !== 0) {
-						props.SetChannelMessages((messages) => (new Map(messages.set(props.selectedChannel.id!, result))))
+						props.SetChannelMessages((messages) => (messages.set(props.selectedChannel.id!, result)))
 						// props.ChannelRefMap.
 					} else {
-						props.SetChannelMessages((messages) => (new Map(messages.set(props.selectedChannel.id!, null))))
+						props.SetChannelMessages((messages) => (messages.set(props.selectedChannel.id!, null)))
 					}
 				})
 		}
