@@ -47,8 +47,6 @@ function MobileDropdown(props: { isHiddenMobile: boolean }) {
 }
 
 function NavBarLinkElements(props: any) {
-	const a = new Map<number, string>([[1, "Home"], [2, "Servers"]])
-
 	return (
 		<div className="hidden sm:block w-full">
 			<div className="flex flex-1 w-full">
@@ -57,16 +55,6 @@ function NavBarLinkElements(props: any) {
 				<button className="ml-auto mr-10" onClick={HandleLogin}>LOG IN</button>
 			</div>
 		</div>
-		// <div className="hidden sm:block">
-		// 	<div className="flex">
-		// 		<a href="#" onClick={() => {setIsSelected(!isSelected)}} className={`${isSelected}     px-3 py-2 rounded-md text-lg font-medium leading-5 text-gray-300 hover:text-white hover:bg-gray-700 focus:outline-none focus:text-white focus:bg-gray-700 transition duration-150 ease-in-out`}>Home</a>
-		// 		<a href="#" onClick={() => {setIsSelected(!isSelected)}} className={` ml-4 px-3 py-2 rounded-md text-sm font-medium leading-5 text-gray-300 hover:text-white hover:bg-gray-700 focus:outline-none focus:text-white focus:bg-gray-700 transition duration-150 ease-in-out`}>Dashboard</a>
-		// 		<a href="#" onClick={() => {setIsSelected(!isSelected)}} className={` ml-4 px-3 py-2 rounded-md text-sm font-medium leading-5 text-gray-300 hover:text-white hover:bg-gray-700 focus:outline-none focus:text-white focus:bg-gray-700 transition duration-150 ease-in-out`}>Team</a>
-		// 		<a href="#" onClick={() => {setIsSelected(!isSelected)}} className={` ml-4 px-3 py-2 rounded-md text-sm font-medium leading-5 text-gray-300 hover:text-white hover:bg-gray-700 focus:outline-none focus:text-white focus:bg-gray-700 transition duration-150 ease-in-out`}>Projects</a>
-		// 		<a href="#" onClick={() => {setIsSelected(!isSelected)}} className={` ml-4 px-3 py-2 rounded-md text-sm font-medium leading-5 text-gray-300 hover:text-white hover:bg-gray-700 focus:outline-none focus:text-white focus:bg-gray-700 transition duration-150 ease-in-out`}>Calendar</a>
-		// 	</div> 
-		// </div>
-
 	)
 }
 

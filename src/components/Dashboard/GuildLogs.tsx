@@ -9,9 +9,7 @@ import {
 	useParams
 } from "react-router-dom";
 import { ChannelList } from './ChannelList';
-import { IBotMessage, IMessageDeletePayload, IMessagePayload, IMessageTypeEnum } from '../../components/Interfaces';
-import { Map } from 'immutable'
-import { MutateMapArray } from '../../components/Misc/helper';
+import { IBotMessage, IMessageDeletePayload, IMessageEditPayload, IMessagePayload, IMessageTypeEnum } from '../../components/Interfaces';
 
 export function GuildLogs() {
 	const [channelsID, setChannelsID] = useState<TChannels[] | null>(null);
@@ -20,11 +18,10 @@ export function GuildLogs() {
 		({ id: window.localStorage.getItem("SelectedChannelId") ? window.localStorage.getItem("SelectedChannelId") : null,
 		   type: window.localStorage.getItem("SelectedChannelType") as any ? window.localStorage.getItem("SelectedChannelType") as any : null});
 	// Some state to save the messages of all channels after they have been loaded.
-	const [ChannelMessages, SetChannelMessages] = useState<Map<string,ChannelMessage[] | null>>(Map());
+	//														 channel_id   message_id  message
+	let [ChannelMessages, SetChannelMessages] = useState<Map<string, Map<string,ChannelMessage> | null>>(new Map());
 	const ws = useRef<WebSocket | null>(null);
-
-    const ChannelRef = useRef<HTMLDivElement[] | null[]>([null]);
-    const ChannelRefMap = useRef<Map<string,HTMLDivElement | null>>(Map());
+    const ChannelRefMap = useRef<Map<string,HTMLDivElement | null>>(new Map());
 
 	useEffect(() => {
 		let KeepAlive: NodeJS.Timeout
@@ -55,7 +52,6 @@ export function GuildLogs() {
 
 		connect()		
 		return function cleanup() {
-			console.log('Clean')
 			// destroy ws
 			// WebSocket.close() waits to close the connection while the cleanup runs instantly
 			// this causes the event listeners to stay and try to reconnect to the socket
@@ -69,7 +65,6 @@ export function GuildLogs() {
 	// 
 	useEffect(() => {
 		if (!ws.current){
-			console.log('WS is null')
 			return;
 		}
 
@@ -78,27 +73,46 @@ export function GuildLogs() {
 			if (JsonMessage.p.t === IMessageTypeEnum.Message) {
 				AddMessage(JsonMessage.p)
 			} else if (JsonMessage.p.t === IMessageTypeEnum.MessegeDelete) {
-				const start = performance.now()
 				DeleteMessage(JsonMessage.p)
-				console.log("Message DLETE", performance.now() - start)
+			} else if (JsonMessage.p.t === IMessageTypeEnum.MessageEdit) {
+				EditMessage(JsonMessage.p)
 			} else {
 				console.log('Unhandled WebSocket message type')
 			}
 		});
-		
 	},[ChannelMessages, SelectedID])
-	const DeleteMessage = (payload: IMessageDeletePayload) => {
-		// Mutate a single property value
-		MutateMapArray(SetChannelMessages, ChannelMessages, payload, "is_deleted")
+	const EditMessage = (payload: IMessageEditPayload) => {
+		SetChannelMessages((Messages) => (new Map(
+			Messages.set(payload.channel_id, Messages.get(payload.channel_id)!
+			.set(payload.id, {...Messages
+				.get(payload.channel_id)!
+				.get(payload.id)!, is_edited: true, content: payload.content} 
+			)))
+		))
 	}
-	Math.floor
+	const DeleteMessage = (payload: IMessageDeletePayload) => {
+		const start = performance.now()
+		const a = ChannelMessages.set(payload.channel_id, ChannelMessages.get(payload.channel_id)!
+		.set(payload.id, {...ChannelMessages!
+			.get(payload.channel_id)!
+			.get(payload.id)!, is_deleted: true} ))
+			
+		SetChannelMessages((Messages) => (new Map(
+			Messages.set(payload.channel_id, Messages.get(payload.channel_id)!
+			.set(payload.id, {...Messages
+				.get(payload.channel_id)!
+				.get(payload.id)!, is_deleted: true} 
+			)))
+		))
+		console.log("Message DLETE", performance.now() - start)
+	}
 	const AddMessage = (payload: IMessagePayload) => {
-		console.log(ChannelMessages)
 		// Check if we have that channel laoded
 		if (ChannelMessages.get(payload.channel_id)) {
 			// TODO: proper interface
 			// SetChannelMessages((messages) => ({ ...messages, [payload.channel_id]: [...messages[payload.channel_id]!, (payload as any)]}))
-			SetChannelMessages(ChannelMessages.set(payload.channel_id, [...ChannelMessages.get(payload.channel_id)!, payload as any]))
+			SetChannelMessages((Messages) => (new Map(Messages.set(payload.channel_id, Messages.get(payload.channel_id)!
+			.set(payload.id, payload as any)))))
 
 		} else {
 			// Channel was not loaded. Do not add the message
@@ -135,7 +149,6 @@ export function GuildLogs() {
 				<div className="flex flex-1">
 					<TextChannelSelected ChannelRefMap={ChannelRefMap} selectedChannel={SelectedID} ChannelMessages={ChannelMessages} SetChannelMessages={SetChannelMessages} />
 				</div>
-				<button onClick={() => {console.log(ChannelRefMap.current.get("783148053426339861")!)}}>CLICK</button>
 			</div>
 		)
 	} else {
@@ -162,33 +175,35 @@ function MemberStatus() {
 
 function TextLikeChannel(props: {
 	ChannelRefMap: React.MutableRefObject<Map<string, HTMLDivElement | null>>,
-	SelectedTextChannel: ChannelMessage[],
+	SelectedTextChannel: Map<string, ChannelMessage>,
 	SelectedChannel: string}
 	) 
 {
 	const start = performance.now()
-	const a = props.SelectedTextChannel.map((element, key) => {
+	let a: JSX.Element[] = []
+	props.SelectedTextChannel.forEach((element, key) => {
 		if (element.attachments) {
-			return (<div ref={el => props.ChannelRefMap.current.set(element.id, el)} className="flex-1" key={key}>Is an attachment =&gt;  {element.attachments}</div>)
+			a.push(<div ref={el => props.ChannelRefMap.current.set(element.id, el)} className="flex-1" key={key}>Is an attachment =&gt;  {element.attachments}</div>)
 		} else if (element.embeds) {
-			return (<div className="flex-1" key={key}>Is an embed =&gt;  {element.embeds}</div>)
+			a.push(<div className="flex-1" key={key}>Is an embed =&gt;  {element.embeds}</div>)
 		} else {
 			if (element.is_deleted) {
-				return (<div className="flex-1" key={key}>{element.content} IS DELETED</div>)	
+				a.push(<div className="flex-1" key={key}>{element.content} IS DELETED</div>)	
 			} else if (element.is_edited) {
-				return (<div className="flex-1" key={key}>{element.content} IS EDITED</div>)	
+				a.push(<div className="flex-1" key={key}>{element.content} IS EDITED</div>)	
 			} else if (element.is_pinned) {
-				return (<div className="flex-1" key={key}>{element.content} IS PINNED</div>)	
+				a.push(<div className="flex-1" key={key}>{element.content} IS PINNED</div>)	
 			} else {
 				// normal message
-				return (<div className="flex-1" key={key}>{element.content}</div>)	
+				a.push(<div className="flex-1" key={key}>{element.content}</div>)	
 			}
 		}
 	})
+
 	console.log("Message Handle", performance.now() - start)
 	return (
 		<>
-			{a}
+			{a}	
 		</>
 	)
 }
@@ -199,8 +214,8 @@ export function TextChannelSelected(props:{ selectedChannel:{
 		},
 		ChannelRefMap: React.MutableRefObject<Map<string, HTMLDivElement | null>>,
 		ChannelMessages: 
-			Map<string, ChannelMessage[] | null>,
-		 SetChannelMessages: React.Dispatch<React.SetStateAction<Map<string, ChannelMessage[] | null>>>
+			Map<string, Map<string, ChannelMessage> | null>,
+		 SetChannelMessages: React.Dispatch<React.SetStateAction<Map<string, Map<string, ChannelMessage> | null>>>
 		}) 
 	{
 
@@ -228,10 +243,14 @@ export function TextChannelSelected(props:{ selectedChannel:{
 				.then((result: ChannelMessage[]) => {
 					// Set empty results as null
 					if (result.length !== 0) {
-						props.SetChannelMessages((messages) => (messages.set(props.selectedChannel.id!, result)))
+						let a = new Map()
+						result.forEach((values, index) => {
+							a.set(values.id, values)
+						})
+						props.SetChannelMessages((messages) => (new Map(messages.set(props.selectedChannel.id!, a as any))))
 						// props.ChannelRefMap.
 					} else {
-						props.SetChannelMessages((messages) => (messages.set(props.selectedChannel.id!, null)))
+						props.SetChannelMessages((messages) => (new Map(messages.set(props.selectedChannel.id!, null))))
 					}
 				})
 		}

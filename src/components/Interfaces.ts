@@ -42,6 +42,12 @@ export interface IMessageDeleteBulkPayload {
 
 export interface IMessageEditPayload {
 	t: IMessageTypeEnum.MessageEdit
+	id: string,
+	guild_id: string,
+	channel_id: string,
+	is_edited: boolean,
+	executor: string | null,
+	content: string,
 }
 
 export interface IMessageReactionAddPayload {
