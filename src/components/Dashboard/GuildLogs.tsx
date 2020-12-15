@@ -1,5 +1,4 @@
 import React, { createRef, useCallback, useEffect, useRef, useState } from 'react';
-import url from 'url';
 import {
 	BrowserRouter as Router,
 	Switch,
@@ -9,8 +8,8 @@ import {
 	useParams
 } from "react-router-dom";
 import { ChannelList } from './ChannelList';
-import { IBotMessage, IMessageDeletePayload, IMessageEditPayload, IMessagePayload, IMessageTypeEnum } from '../../components/Interfaces';
-
+import { IBotMessage, IMessageDeletePayload, IMessageEditPayload, IMessagePayload, IMessageTypeEnum } from '../../../../DiscordBotJS/src/Interfaces';
+import { DiscordBotJS } from "../../../../DiscordBotJS/ProtoOutput/bundle";
 export function GuildLogs() {
 	const [channelsID, setChannelsID] = useState<TChannels[] | null>(null);
 	const { guild_id } = useParams<{ guild_id: string }>()
@@ -21,8 +20,14 @@ export function GuildLogs() {
 	//														 channel_id   message_id  message
 	let [ChannelMessages, SetChannelMessages] = useState<Map<string, Map<string,ChannelMessage> | null>>(new Map());
 	const ws = useRef<WebSocket | null>(null);
-    const ChannelRefMap = useRef<Map<string,HTMLDivElement | null>>(new Map());
-
+	const [GuildUsersMap, SetGuildUsersMap] = useState<Map<string,GuildUsers> | null>(new Map());
+	/** We will scroll to this Div */
+	const ScrollToRef = useRef<HTMLDivElement | null>(null)
+	/** The actual div that does the scrolling. Attach onScroll listener */
+	const ScrollRef = useRef<HTMLDivElement | null>(null)
+	const [IsAtTheBottomOfMessages, SetIsAtTheBottomOfMessages] = useState<Map<string, boolean>>(new Map());
+	/** Height , scrollTop, ClientHeight */
+	const [ScrollLocationMap, setScrollLocationMap] = useState(new Map<string, [number, number, number]>())
 	useEffect(() => {
 		let KeepAlive: NodeJS.Timeout
 		function connect() {
@@ -67,52 +72,73 @@ export function GuildLogs() {
 		if (!ws.current){
 			return;
 		}
+		ws.current.onmessage = (async (event) => {
+			// const JsonMessage = JSON.parse(event.data) as IBotMessage
+			const arrayBuffer = await (event.data as Blob).arrayBuffer()
+			const BUffer = new Uint8Array(arrayBuffer)
+			const BotResponse = DiscordBotJS.BotResponse.decode(BUffer);
+			if (BotResponse.botMessage) {
+				if (!(Object.keys(BotResponse.botMessage!.attachments!).length > 0)) {
+					BotResponse.botMessage!.attachments = null
+				} 
+				if (!(BotResponse.botMessage!.embeds!.length > 0)) {
+					BotResponse.botMessage!.embeds = null
+				}
+				AddMessage(BotResponse)
+			} else if (BotResponse.botEditMessage) {
 
-		ws.current.onmessage = ((event) => {
-			const JsonMessage = JSON.parse(event.data) as IBotMessage
-			if (JsonMessage.p.t === IMessageTypeEnum.Message) {
-				AddMessage(JsonMessage.p)
-			} else if (JsonMessage.p.t === IMessageTypeEnum.MessegeDelete) {
-				DeleteMessage(JsonMessage.p)
-			} else if (JsonMessage.p.t === IMessageTypeEnum.MessageEdit) {
-				EditMessage(JsonMessage.p)
+				EditMessage(BotResponse)
+			} else if (BotResponse.botDeleteMessage) {
+
+				DeleteMessage(BotResponse)
 			} else {
-				console.log('Unhandled WebSocket message type')
+				console.log('Unhandled message type')
 			}
-		});
-	},[ChannelMessages, SelectedID])
-	const EditMessage = (payload: IMessageEditPayload) => {
+		}); 
+	},[ChannelMessages, SelectedID, IsAtTheBottomOfMessages])
+	const EditMessage = (payload: DiscordBotJS.BotResponse) => {
+
 		SetChannelMessages((Messages) => (new Map(
-			Messages.set(payload.channel_id, Messages.get(payload.channel_id)!
+			Messages.set(payload.botMessage!.channel_id!, Messages.get(payload.botMessage!.channel_id!)!
 			.set(payload.id, {...Messages
-				.get(payload.channel_id)!
-				.get(payload.id)!, is_edited: true, content: payload.content} 
+				.get(payload.botMessage!.channel_id!)!
+				.get(payload.id)!, is_edited: true, content: payload.botEditMessage!.content!} 
 			)))
 		))
 	}
-	const DeleteMessage = (payload: IMessageDeletePayload) => {
-		const start = performance.now()
-		const a = ChannelMessages.set(payload.channel_id, ChannelMessages.get(payload.channel_id)!
-		.set(payload.id, {...ChannelMessages!
-			.get(payload.channel_id)!
-			.get(payload.id)!, is_deleted: true} ))
-			
-		SetChannelMessages((Messages) => (new Map(
-			Messages.set(payload.channel_id, Messages.get(payload.channel_id)!
-			.set(payload.id, {...Messages
-				.get(payload.channel_id)!
-				.get(payload.id)!, is_deleted: true} 
-			)))
-		))
-		console.log("Message DLETE", performance.now() - start)
+	const DeleteMessage = (payload: DiscordBotJS.BotResponse) => {
+		if (ChannelMessages.get(payload.botDeleteMessage!.channel_id!)) {
+			const start = performance.now()	
+			SetChannelMessages((Messages) => (new Map(
+				Messages.set(payload.botDeleteMessage!.channel_id!, Messages.get(payload.botDeleteMessage!.channel_id!)!
+				.set(payload.id, {...Messages
+					.get(payload.botDeleteMessage!.channel_id!)!
+					.get(payload.id)!, is_deleted: true} 
+				)))
+			))
+			console.log("Message DLETE", performance.now() - start)
+		} else {
+			// Channel was not loaded. Do not add the message
+			console.log('CHANNEL NOT LOADED')
+		}
+
 	}
-	const AddMessage = (payload: IMessagePayload) => {
+	const AddMessage = (payload: DiscordBotJS.BotResponse) => {
 		// Check if we have that channel laoded
-		if (ChannelMessages.get(payload.channel_id)) {
+		if (ChannelMessages.get(payload.botMessage!.channel_id!)) {
 			// TODO: proper interface
 			// SetChannelMessages((messages) => ({ ...messages, [payload.channel_id]: [...messages[payload.channel_id]!, (payload as any)]}))
-			SetChannelMessages((Messages) => (new Map(Messages.set(payload.channel_id, Messages.get(payload.channel_id)!
-			.set(payload.id, payload as any)))))
+			SetChannelMessages((Messages) => (new Map(Messages.set(payload.botMessage!.channel_id!, Messages.get(payload.botMessage!.channel_id!)!
+			.set(payload.id, payload.botMessage as any)))))
+			console.log(ScrollToRef)
+			if (IsAtTheBottomOfMessages.has(SelectedID.id!)) {
+				if (IsAtTheBottomOfMessages.get(SelectedID.id!)!) {
+					// Automatically scroll
+					ScrollToRef.current!.scrollIntoView({behavior: 'smooth'})
+				}
+			} else {
+				// do nothing
+			}
 
 		} else {
 			// Channel was not loaded. Do not add the message
@@ -133,22 +159,73 @@ export function GuildLogs() {
 			.then(res => res.json())
 			.then((result: TChannels[]) => {
 				setChannelsID(result);
+				fetch(`/api/${guild_id}/users`, {
+					method: 'GET',
+					headers: {
+						'Content-Type': 'application/json'
+						// 'Content-Type': 'application/x-www-form-urlencoded',
+					},
+				})
+				.then(res => res.json())
+				.then((result: GuildUsers[]) => {
+					const a = new Map<string,GuildUsers>()
+					result.forEach((value, key) => {
+						a.set(value.id, value)
+					})
+					SetGuildUsersMap(a);
+				})
 			})
 	}, [])
-	// TODO?: Get ALL users from DB
-	useEffect(() => {
 
-	})
+	useEffect(() => {
+		console.log('useeffecy')
+		if (ScrollLocationMap.has(SelectedID.id!)) {
+			if (IsAtTheBottomOfMessages.has(SelectedID.id!)) {
+				if (IsAtTheBottomOfMessages.get(SelectedID.id!)) {
+					ScrollRef.current!.scrollTop = ScrollLocationMap.get(SelectedID.id!)![1] + 99999
+				} else {
+					ScrollRef.current!.scrollTop = ScrollLocationMap.get(SelectedID.id!)![1]
+				}
+			} else {
+				ScrollRef.current!.scrollTop = ScrollLocationMap.get(SelectedID.id!)![1]
+			}
+		}
+	}, [SelectedID])
+
 	if (channelsID) {
 		return (
-			<div className="flex">
+			<div className="flex contain-to-screen-size">
 				{/* Channel List */}
-				<div className="flex truncate w-56">
+				<div className="flex-none w-56">
 					<ChannelList selectedChannel={SelectedID} setSelectedChannel={setSelectedID} Channels={channelsID} />
 				</div>
-				<div className="flex flex-1">
-					<TextChannelSelected ChannelRefMap={ChannelRefMap} selectedChannel={SelectedID} ChannelMessages={ChannelMessages} SetChannelMessages={SetChannelMessages} />
+				{/* Selected Channel */}
+				<div className="flex flex-1 flex-col break-words overflow-auto">
+					<div ref={ScrollRef} className="flex flex-col overflow-auto" id="scroll-chat" onScroll={() => {		
+						console.log('scrolls')				
+						setScrollLocationMap((ScrollLocationMap) => (new Map(ScrollLocationMap.set(SelectedID.id!, [
+							ScrollRef.current!.scrollHeight,
+							ScrollRef.current!.scrollTop,
+							ScrollRef.current!.clientHeight
+						]
+						))))
+						if (ScrollRef.current!.scrollHeight === ScrollRef.current!.scrollTop + ScrollRef.current!.clientHeight) {
+							// We are the very bottom of the scrollable div
+							SetIsAtTheBottomOfMessages(map => (map.set(SelectedID.id!, true)));
+						} else {
+							// Anywhere else
+							SetIsAtTheBottomOfMessages(map => (map.set(SelectedID.id!, false)));
+						}
+					}}>
+						<TextChannelSelected ScrollRef={ScrollToRef} selectedChannel={SelectedID} ChannelMessages={ChannelMessages} SetChannelMessages={SetChannelMessages} />
+						<div ref={ScrollToRef} id="empty"></div>
+					</div>
+					<div className="flex h-10 bg-gray-500">
+						<div>Is typing will go here??</div>
+					</div>
 				</div>
+				{/* TEMP? */}
+				<MemberStatus />
 			</div>
 		)
 	} else {
@@ -174,7 +251,6 @@ function MemberStatus() {
 }
 
 function TextLikeChannel(props: {
-	ChannelRefMap: React.MutableRefObject<Map<string, HTMLDivElement | null>>,
 	SelectedTextChannel: Map<string, ChannelMessage>,
 	SelectedChannel: string}
 	) 
@@ -183,19 +259,19 @@ function TextLikeChannel(props: {
 	let a: JSX.Element[] = []
 	props.SelectedTextChannel.forEach((element, key) => {
 		if (element.attachments) {
-			a.push(<div ref={el => props.ChannelRefMap.current.set(element.id, el)} className="flex-1" key={key}>Is an attachment =&gt;  {element.attachments}</div>)
+			a.push(<div className="py-1" key={key}>Is an attachment =&gt; Name: {element.nickname ? element.nickname : element.username} =&gt; {element.attachments}</div>)
 		} else if (element.embeds) {
-			a.push(<div className="flex-1" key={key}>Is an embed =&gt;  {element.embeds}</div>)
+			a.push(<div className="py-1" key={key}>Is an embed =&gt; Name: {element.nickname ? element.nickname : element.username} =&gt;  {element.embeds}  {element.is_deleted ? "IS DELETD" : ""}</div>)
 		} else {
 			if (element.is_deleted) {
-				a.push(<div className="flex-1" key={key}>{element.content} IS DELETED</div>)	
+				a.push(<div className="py-1" key={key}>{element.nickname ? element.nickname : element.username} =&gt; {element.content} IS DELETED</div>)	
 			} else if (element.is_edited) {
-				a.push(<div className="flex-1" key={key}>{element.content} IS EDITED</div>)	
+				a.push(<div className="py-1" key={key}>{element.nickname ? element.nickname : element.username} =&gt; {element.content} IS EDITED</div>)	
 			} else if (element.is_pinned) {
-				a.push(<div className="flex-1" key={key}>{element.content} IS PINNED</div>)	
+				a.push(<div className="py-1" key={key}>{element.nickname ? element.nickname : element.username} =&gt; {element.content} IS PINNED</div>)	
 			} else {
 				// normal message
-				a.push(<div className="flex-1" key={key}>{element.content}</div>)	
+				a.push(<div className="py-1" key={key}>{element.nickname ? element.nickname : element.username} =&gt; {element.content}</div>)	
 			}
 		}
 	})
@@ -212,14 +288,12 @@ export function TextChannelSelected(props:{ selectedChannel:{
 			id: string | null;
 			type: 'text' | 'voice' | 'category' | 'dm' | 'store' | 'news' | null;
 		},
-		ChannelRefMap: React.MutableRefObject<Map<string, HTMLDivElement | null>>,
+		ScrollRef: React.MutableRefObject<HTMLDivElement | null>
 		ChannelMessages: 
 			Map<string, Map<string, ChannelMessage> | null>,
 		 SetChannelMessages: React.Dispatch<React.SetStateAction<Map<string, Map<string, ChannelMessage> | null>>>
 		}) 
 	{
-
-
 	// Get the channel messages when this channel is selected
 	useEffect(() => {
 		// On load fetch only if we have a channel selected
@@ -252,18 +326,21 @@ export function TextChannelSelected(props:{ selectedChannel:{
 					} else {
 						props.SetChannelMessages((messages) => (new Map(messages.set(props.selectedChannel.id!, null))))
 					}
+				}).then(() => {
+					props.ScrollRef.current!.scrollIntoView()
 				})
 		}
+
+
 	}, [props.selectedChannel])
 
 	// TODO: Improve logic
 	if (props.ChannelMessages.get(props.selectedChannel.id!) && props.selectedChannel.id) {
 		return (
 			<>
-				<div className="flex-1">
-					<TextLikeChannel ChannelRefMap={props.ChannelRefMap} SelectedChannel={props.selectedChannel.id} SelectedTextChannel={props.ChannelMessages.get(props.selectedChannel.id!)!}/>
+				<div className="flex flex-col">
+					<TextLikeChannel SelectedChannel={props.selectedChannel.id} SelectedTextChannel={props.ChannelMessages.get(props.selectedChannel.id!)!}/>
 				</div>
-				<MemberStatus />
 			</>
 		)
 	}
@@ -277,6 +354,8 @@ export interface ChannelMessage {
 	content: string,
 	author: string,
 	type: string,
+	nickname: string | null,
+	username: string
 	embeds?: string,
 	attachments?: string,
 	channel_id: string,
@@ -299,6 +378,17 @@ interface GeneralChannels {
 }
 
 export type TChannels = ITextChannel | IVoiceChannel | ICategoryChannel | IStoreChannel | INewsChannel;
+// TODO: SHARE WITH SERVER
+interface GuildUsers {
+	nickname: string,
+	display_hex_color: string,
+	id: string,
+	username: string,
+	discriminator: number,
+	avatar: string
+	bot: boolean,
+	permissions: number
+}
 
 export interface IChannel {
 	channel_id: string,
