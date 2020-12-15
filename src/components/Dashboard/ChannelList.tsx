@@ -1,6 +1,5 @@
 import { ChannelMessage, ICategoryChannel, INewsChannel, IStoreChannel, ITextChannel, IVoiceChannel, TChannels } from "./GuildLogs";
 import React, { useEffect, useRef, useState } from 'react';
-import url from 'url';
 import {
 	BrowserRouter as Router,
 	Switch,
@@ -90,7 +89,6 @@ export function ChannelList(props: { Channels: TChannels[], selectedChannel: { i
 		}
 	}
 
-
 	const HandleSelect = (index: string, type: 'text' | 'voice' | 'category' | 'dm' | 'store' | 'news') => {
 		props.setSelectedChannel({id: index, type: type})
 		// Set the result in local storage
@@ -98,7 +96,6 @@ export function ChannelList(props: { Channels: TChannels[], selectedChannel: { i
 		window.localStorage.setItem("SelectedChannelType", type);
 	}
 	
-	let prevName = ""
 	CategoryChannels.forEach((value, key) => {
 		value.forEach((value) => {
 			if (value.types === "category") {
@@ -114,7 +111,6 @@ export function ChannelList(props: { Channels: TChannels[], selectedChannel: { i
 			}
 			// Channels.push(<IndividualChannel isSelected={SelectedID} HandleClick={HandleSelect} key={value.channel_id} Channel={value} />)
 		})
-		prevName = key;
 	})
 
 	return (
