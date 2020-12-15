@@ -1,6 +1,6 @@
 import { hot } from 'react-hot-loader';
 import React, { useEffect, useRef, useState } from 'react';
-import url from 'url';
+
 import {
 	BrowserRouter as Router,
 	Switch,
@@ -56,7 +56,6 @@ function App() {
 		fetch('/api/users/@me')
 			.then(res => res.json())
 			.then((result) => {
-				console.log(result)
 				setUser(result)
 			},
 			(error) => {

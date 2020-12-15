@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import url from 'url';
 
 let a: Window
 let accessCode: string | string[]
@@ -17,11 +16,12 @@ window.addEventListener("message", (e) => {
 	// Discord call sucesfull
 	if (e.data.success === 1) {
 		console.log('Succ')
+		const url = new URL(window.location.href);
+		const codeParam = url.searchParams.get("code")
 
-		const c = url.parse(a.location.href, true)
-		if (c.query.code) {
+		if (codeParam) {
 			// We got the code
-			accessCode = c.query.code;
+			accessCode = codeParam;
 		}
 		a.close()
 		console.log(accessCode)
