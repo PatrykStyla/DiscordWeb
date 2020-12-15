@@ -4,6 +4,15 @@
 
 @import "tailwindcss/utilities";
 
+html, body {
+	width: 100%;
+	height: 100%;
+}
+
+.contain-to-screen-size {
+	height: calc(100% - 4rem)
+}
+
 .btn {
     @apply font-bold;
     @apply py-2; 
