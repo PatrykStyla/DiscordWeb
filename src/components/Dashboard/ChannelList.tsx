@@ -8,6 +8,8 @@ import {
 	useHistory,
 	useParams
 } from "react-router-dom";
+import { useRecoilState, useSetRecoilState } from 'recoil';
+import { SelectedIdAtom } from './atoms';
 
 export function CategoryChannel(props: {Channel: ICategoryChannel, isSelected: string | null, HandleClick: (index: string, type: 'text' | 'voice' | 'category' | 'dm' | 'store' | 'news') => void }) {
 	return (
@@ -49,13 +51,11 @@ export function NewsChannel(props: {Channel: INewsChannel, isSelected: string | 
 	)
 }
 
-export function ChannelList(props: { Channels: TChannels[], selectedChannel: { id: string | null; type: string | null; }, setSelectedChannel:  React.Dispatch<React.SetStateAction<{
-    id: string | null;
-    type: 'text' | 'voice' | 'category' | 'dm' | 'store' | 'news' | null;
-}>>}) {
+export function ChannelList(props: { Channels: TChannels[]}) {
 	let Channels: JSX.Element[] = []
 	const ChannelMaps = new Map<string, TChannels>()
 	const sorted = props.Channels.sort((a, b) => a.position - b.position)
+	const [SelectedID, setSelectedID] = useRecoilState(SelectedIdAtom)
 
 	sorted.forEach((element) => {
 		ChannelMaps.set(element.channel_id, element);
@@ -90,7 +90,7 @@ export function ChannelList(props: { Channels: TChannels[], selectedChannel: { i
 	}
 
 	const HandleSelect = (index: string, type: 'text' | 'voice' | 'category' | 'dm' | 'store' | 'news') => {
-		props.setSelectedChannel({id: index, type: type})
+		setSelectedID({id: index, type: type})
 		// Set the result in local storage
 		window.localStorage.setItem("SelectedChannelId", index);
 		window.localStorage.setItem("SelectedChannelType", type);
@@ -99,15 +99,15 @@ export function ChannelList(props: { Channels: TChannels[], selectedChannel: { i
 	CategoryChannels.forEach((value, key) => {
 		value.forEach((value) => {
 			if (value.types === "category") {
-				Channels.push(<CategoryChannel isSelected={props.selectedChannel.id} HandleClick={HandleSelect} key={value.channel_id} Channel={value} />)
+				Channels.push(<CategoryChannel isSelected={SelectedID.id!} HandleClick={HandleSelect} key={value.channel_id} Channel={value} />)
 			} else if (value.types === "text") {
-				Channels.push(<TextChannel isSelected={props.selectedChannel.id} HandleClick={HandleSelect} key={value.channel_id} Channel={value} />)
+				Channels.push(<TextChannel isSelected={SelectedID.id!} HandleClick={HandleSelect} key={value.channel_id} Channel={value} />)
 			} else if (value.types === "voice") {
-				Channels.push(<VoiceChannel isSelected={props.selectedChannel.id} HandleClick={HandleSelect} key={value.channel_id} Channel={value} />)
+				Channels.push(<VoiceChannel isSelected={SelectedID.id!} HandleClick={HandleSelect} key={value.channel_id} Channel={value} />)
 			} else if (value.types === "store") {
-				Channels.push(<StoreChannel isSelected={props.selectedChannel.id} HandleClick={HandleSelect} key={value.channel_id} Channel={value} />)
+				Channels.push(<StoreChannel isSelected={SelectedID.id!} HandleClick={HandleSelect} key={value.channel_id} Channel={value} />)
 			} else if (value.types === "news") {
-				Channels.push(<NewsChannel isSelected={props.selectedChannel.id} HandleClick={HandleSelect} key={value.channel_id} Channel={value} />)
+				Channels.push(<NewsChannel isSelected={SelectedID.id!} HandleClick={HandleSelect} key={value.channel_id} Channel={value} />)
 			}
 			// Channels.push(<IndividualChannel isSelected={SelectedID} HandleClick={HandleSelect} key={value.channel_id} Channel={value} />)
 		})
