@@ -228,11 +228,8 @@ export function GuildLogs() {
 					<ChannelList Channels={channelsID} />
 				</div>
 				{/* Selected Channel */}
-
-					<TextChannelSelected ChannelMessages={ChannelMessages} SetChannelMessages={SetChannelMessages} />
-
+				<TextChannelSelected ChannelMessages={ChannelMessages} SetChannelMessages={SetChannelMessages} />
 				{/* TEMP? */}
-				<MemberStatus />
 			</div>
 		)
 	} else {
@@ -251,9 +248,9 @@ export function GuildLogs() {
 
 }
 
-function MemberStatus() {
+export function MemberStatus() {
 	return (
-		<div className="flex flex-initial w-40">member status here????</div>
+		<div className="flex flex-grow-0 flex-shrink-0 w-44">member status here????</div>
 	)
 }
 

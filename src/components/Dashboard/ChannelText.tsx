@@ -10,7 +10,7 @@ import {
 import { ChannelList } from './ChannelList';
 import { IBotMessage, IMessageDeletePayload, IMessageEditPayload, IMessagePayload, IMessageTypeEnum } from '../../../../DiscordBotJS/src/Interfaces';
 import { DiscordBotJS } from "../../../../DiscordBotJS/ProtoOutput/bundle";
-import { ChannelMessage } from './GuildLogs';
+import { ChannelMessage, MemberStatus } from './GuildLogs';
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
 import { channelMessagesAtom, IsAtTheBottomOfMessagesMapAtom, ScrollLocationMapAtom, SelectedIdAtom } from './atoms';
 
@@ -84,8 +84,8 @@ export function TextChannelSelected(props: {
 	// TODO: Improve logic
 	if (props.ChannelMessages.get(SelectedID.id!) && SelectedID.id) {
 		return (
-			<div className="flex flex-1 flex-col break-words overflow-auto">
-				<div ref={ScrollRef} className="flex flex-col overflow-auto" id="scroll-chat" onScroll={() => {
+			<div className="flex flex-col min-w-0 flex-1">
+				<div className="flex flex-row h-full" id="scroll-chat" onScroll={() => {
 					ScrollLocationMap((ScrollLocationMap) => (new Map(ScrollLocationMap.set(SelectedID.id!, [
 						ScrollRef.current!.scrollHeight,
 						ScrollRef.current!.scrollTop,
@@ -101,14 +101,20 @@ export function TextChannelSelected(props: {
 						SetIsAtTheBottomOfMessagesMap(map => (new Map([...map,...map.set(SelectedID.id!, false)])));
 					}
 				}}>
-					<div className="flex flex-col">
-						<TextLikeChannel ScrollToRef={ScrollToRef} SelectedChannel={SelectedID.id} SelectedTextChannel={props.ChannelMessages.get(SelectedID.id!)!} />
+					<div className="flex flex-col h-full min-w-0 w-full" id="Shrink">
+						<div ref={ScrollRef} className="overflow-auto" id="MessageWrapper">
+							<div  className="flex flex-col">
+								<TextLikeChannel ScrollToRef={ScrollToRef} SelectedChannel={SelectedID.id} SelectedTextChannel={props.ChannelMessages.get(SelectedID.id!)!} />
+							</div>
+						</div>	
+						<div ref={ScrollToRef} id="empty"></div>
+						<div className="flex h-10 bg-gray-500">
+							<div>Is typing will go here??</div>
+						</div>
 					</div>
-					<div ref={ScrollToRef} id="empty"></div>
+					<MemberStatus />
 				</div>
-				<div className="flex h-10 bg-gray-500">
-					<div>Is typing will go here??</div>
-				</div>
+
 			</div>
 		)
 	}
@@ -130,16 +136,18 @@ function TextLikeChannel(props: {
 	// // Read
 	// const SelectedID = useRecoilValue(SelectedIdAtom)
 
+	useEffect(() => {
+		console.log(props.ScrollToRef.current!.scrollIntoView())
+	}, [])
+
 	const start = performance.now()
 	let a: JSX.Element[] = []
 	props.SelectedTextChannel.forEach((element, key) => {
 		if (element.attachments) {
 			// TODO: Type missmatch
 			if(typeof element.attachments === "string") {
-				console.log('Up')
 				a.push(<div className="py-1" key={key}>Is an attachment =&gt; Name: {element.nickname ? element.nickname : element.username} =&gt; {element.attachments}</div>)
 			} else if (typeof element.attachments === "object") {
-				console.log('Down')
 				const av = Object.keys(element.attachments as Object)
 				a.push(<div className="py-1" key={key}>Is an attachment =&gt; Name: {element.nickname ? element.nickname : element.username} =&gt; {(element.attachments[av[0]] as any).id}</div>)
 			}
@@ -167,3 +175,5 @@ function TextLikeChannel(props: {
 
 	)
 }
+
+const sleep = (delay: any) => new Promise((resolve) => setTimeout(resolve, delay))

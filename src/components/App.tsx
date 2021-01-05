@@ -13,8 +13,6 @@ import { NavBar } from './NavBar/NavBar';
 import { Dashboard } from './Dashboard';
 import { GuildLogs } from './Dashboard/GuildLogs';
 
-// import DB from '/home/tulipan/DiscordBotJS/src/DB/DB'
-
 // https://discord.com/api/oauth2/authorize?client_id=719720108808994917&redirect_uri=https%3A%2F%2Fdiscord.patrykstyla.com%2Fapi%2Fdiscord-login&response_type=code&scope=email%20identify%20guilds
 
 // return (
