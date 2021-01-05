@@ -9,55 +9,23 @@ var DuplicatePackageCheckerPlugin = require("duplicate-package-checker-webpack-p
 
 module.exports = {
 	externals: {
-		// protobufjs: 'protobufjs',
-		protobufjs: 'protobuf'
+		protobufjs: 'protobuf',
+		protobufjs: 'protobufjs',
+		protobuf: 'protobuf',
+		protobuf: 'protobufjs'
 	},
 	entry: [
-		'webpack-dev-server/client?https://discord.patrykstyla.com:8080',
 		'./src/index',
 		// './public/css/main.css'
 	],
 	output: {
 		path: path.join(__dirname, '/dist'),
-		publicPath: 'https://discord.patrykstyla.com:8080/',
 		filename: 'bundle.js'
 	},
-	devServer: {
-		headers: { "Access-Control-Allow-Origin": "*" },
-		host: '172.31.35.212',
-		https: true,
-		compress: true,
-		disableHostCheck: true,
-		key: fs.readFileSync('/etc/letsencrypt/live/patrykstyla.com/privkey.pem'),
-		cert: fs.readFileSync('/etc/letsencrypt/live/patrykstyla.com/fullchain.pem'),
-        transportMode: 'ws', 
-        injectClient: false,
-		// proxy: {
-		// 	'/': 'https://discord.patrykstyla.com'
-		// },
-		overlay: true,
-		historyApiFallback: true,
-		stats: {
-			assets: true,
-			children: false,
-			chunks: false,
-			hash: false,
-			modules: false,
-			publicPath: false,
-			timings: false,
-			version: false,
-			warnings: true,
-			colors: {
-				green: '\u001b[32m'
-			}
-		}
-	},
+
 	// ...you'll probably need to configure the usual Webpack fields like "mode" and "entry", too.
 	resolve: {
 		extensions: [".ts", ".tsx", ".js", ".jsx"],
-		alias: {
-			  'react-dom': '@hot-loader/react-dom',
-		}
 	},
 	module: {
 		rules: [
@@ -83,7 +51,6 @@ module.exports = {
 							// plugin-proposal-decorators is only needed if you're using experimental decorators in TypeScript
 							["@babel/plugin-proposal-decorators", { legacy: true }],
 							  ["@babel/plugin-proposal-class-properties", { loose: true }],
-							  "react-hot-loader/babel",
 							  "@babel/transform-runtime"
 							//dedupe similar code  //minify everything
 							//Merge chunks 
@@ -113,7 +80,6 @@ module.exports = {
 							// plugin-proposal-decorators is only needed if you're using experimental decorators in TypeScript
 							// ["@babel/plugin-proposal-decorators", { legacy: true }],
 							["@babel/plugin-proposal-class-properties", { loose: true }],
-							"react-hot-loader/babel",
 							"@babel/transform-runtime"
 						]
 					}
@@ -152,7 +118,7 @@ module.exports = {
 		// new HtmlWebpackPlugin({
 		// 	template: 'dist/index.html'
 		// }),
-		new MiniCssExtractPlugin(),
+		// new MiniCssExtractPlugin(),
 		new WebpackAnalyzer()
 	],
 	devtool: (process.env.INLINE_SOURCE_MAP === "true") ? 'inline-source-map' : 'hidden-source-map'
