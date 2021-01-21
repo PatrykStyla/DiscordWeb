@@ -109,7 +109,7 @@ export function TextChannelSelected(props: {
 						</div>	
 						<div ref={ScrollToRef} id="empty"></div>
 						<div className="flex h-10 bg-gray-500">
-							<div>Is typing will go here??</div>
+							<div className="truncate">Is typing will go here??</div>
 						</div>
 					</div>
 					<MemberStatus />

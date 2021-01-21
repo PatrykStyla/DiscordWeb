@@ -6,7 +6,9 @@
   "scripts": {
     "bundle": "webpack",
     "start": "cross-env INLINE_SOURCE_MAP=true webpack-dev-server --hide-modules --mode development --hot --config webpack.config.js",
-    "build": "cross-env INLINE_SOURCE_MAP=false webpack --mode production --hide-modules --config webpack.prod.js",
+	"build": "cross-env INLINE_SOURCE_MAP=false webpack --mode production --hide-modules --config webpack.prod.js",
+	"tailwind": "npx tailwindcss-cli@latest build ./public/css/main.css -o /var/www/DiscordWeb/main.css -c ./tailwind.config.js",
+	"tailwind-build": "NODE_ENV=production npx tailwindcss-cli@latest build ./public/css/main.css -o ./dist/main.css",
     "check-types": "tsc"
   },
   "repository": {
