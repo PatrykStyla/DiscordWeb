@@ -16,7 +16,7 @@ window.addEventListener("message", (e) => {
 	// Discord call sucesfull
 	if (e.data.success === 1) {
 		console.log('Succ')
-		const url = new URL(window.location.href);
+		const url = new URL(a.window.location.href);
 		const codeParam = url.searchParams.get("code")
 
 		if (codeParam) {
