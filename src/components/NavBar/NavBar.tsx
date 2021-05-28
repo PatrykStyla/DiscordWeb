@@ -4,33 +4,12 @@ import { Link } from 'react-router-dom';
 let a: Window
 let accessCode: string | string[]
 
-window.addEventListener("message", (e) => {
-	if (e.origin !== "https://discord.patrykstyla.com") {
-		return;
-	}
-	// ignore messages that are not from the pop up
-	if (!a) {
-		return
-	}
-
-	// Discord call sucesfull
-	if (e.data.success === 1) {
-		console.log('Succ')
-		const url = new URL(a.window.location.href);
-		const codeParam = url.searchParams.get("code")
-
-		if (codeParam) {
-			// We got the code
-			accessCode = codeParam;
-		}
-		a.close()
-		console.log(accessCode)
-	} else {
-	}
-})
-
 function HandleLogin() {
 	a = window.open('https://discord.com/api/oauth2/authorize?client_id=719720108808994917&redirect_uri=https%3A%2F%2Fdiscord.patrykstyla.com%2Fapi%2Fdiscord-login&response_type=code&scope=email%20identify%20guilds', 'popup', 'width=500,height=800')!;
+}
+
+function HandleLogout(setIsLoggedIn: React.Dispatch<React.SetStateAction<boolean>>) {
+	
 }
 
 function MobileDropdown(props: { isHiddenMobile: boolean }) {
@@ -46,13 +25,18 @@ function MobileDropdown(props: { isHiddenMobile: boolean }) {
 	)
 }
 
-function NavBarLinkElements(props: any) {
+function NavBarLinkElements(props: {isLoggedIn: boolean, setIsLoggedIn: React.Dispatch<React.SetStateAction<boolean>>}) {
 	return (
 		<div className="hidden sm:block w-full">
 			<div className="flex flex-1 w-full">
 				<Link to="/" className={`px-3 py-2 rounded-md text-lg font-medium leading-5 text-gray-300 hover:text-white hover:bg-gray-700 focus:outline-none focus:text-white focus:bg-gray-700 transition duration-150 ease-in-out`}>Home</Link>
 				<Link to="/servers" className={`px-3 py-2 rounded-md text-lg font-medium leading-5 text-gray-300 hover:text-white hover:bg-gray-700 focus:outline-none focus:text-white focus:bg-gray-700 transition duration-150 ease-in-out`}>Servers</Link>
-				<button className="ml-auto mr-10" onClick={HandleLogin}>LOG IN</button>
+				{props.isLoggedIn ?
+					<button className="ml-auto mr-10 px-3 py-2 rounded-md text-lg font-medium leading-5 text-gray-300 hover:text-white hover:bg-gray-700 focus:outline-none focus:text-white focus:bg-gray-700 transition duration-150 ease-in-out" onClick={() => props.setIsLoggedIn(false)}>LOG OUT</button>
+					:
+					<button className="ml-auto mr-10 px-3 py-2 rounded-md text-lg font-medium leading-5 text-gray-300 hover:text-white hover:bg-gray-700 focus:outline-none focus:text-white focus:bg-gray-700 transition duration-150 ease-in-out" onClick={HandleLogin}>LOG IN</button>
+				}
+
 			</div>
 		</div>
 	)
@@ -71,9 +55,35 @@ function MobileMenuDropdown(props: { MobileMenu: boolean, isHiddenMobile: boolea
 	)
 }
 
-export function NavBar(props: any) {
+export function NavBar(props: {isLoggedIn: boolean, setIsLoggedIn: React.Dispatch<React.SetStateAction<boolean>>}) {
 	const [isHiddenMobile, setIsHiddenMobile] = useState(true)
 	const [MobileMenu, setMobileMenu] = useState(true)
+
+	window.addEventListener("message", (e) => {
+		if (e.origin !== "https://discord.patrykstyla.com") {
+			return;
+		}
+		// ignore messages that are not from the pop up
+		if (!a) {
+			return
+		}
+	
+		// Discord call sucesfull
+		if (e.data.success === 1) {
+			console.log('Succ')
+			const url = new URL(a.window.location.href);
+			const codeParam = url.searchParams.get("code")
+	
+			if (codeParam) {
+				// We got the code
+				accessCode = codeParam;
+				props.setIsLoggedIn(true);
+			}
+			a.close()
+			console.log(accessCode)
+		} else {
+		}
+	})
 
 	return (
 		<nav className="bg-gray-800">
@@ -83,7 +93,7 @@ export function NavBar(props: any) {
 						<MobileMenuDropdown MobileMenu={MobileMenu} isHiddenMobile={isHiddenMobile} setIsHiddenMobile={setIsHiddenMobile} setMobileMenu={setMobileMenu} />
 					</div>
 					<div className="flex-1 flex items-center justify-center sm:items-stretch sm:justify-start">
-						<NavBarLinkElements />
+						<NavBarLinkElements isLoggedIn={props.isLoggedIn} setIsLoggedIn={props.setIsLoggedIn} />
 					</div>
 					{/* Profile Tab */}
 					{/* <div className="absolute inset-y-0 right-0 flex items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">
