@@ -1,22 +1,17 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const fs = require('fs')
-const webpack = require('webpack')
 const WebpackAnalyzer = require('webpack-bundle-analyzer').BundleAnalyzerPlugin
-const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
-var DuplicatePackageCheckerPlugin = require("duplicate-package-checker-webpack-plugin");
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 module.exports = {
 	externals: {
-		protobufjs: 'protobuf',
 		protobufjs: 'protobufjs',
-		protobuf: 'protobuf',
-		protobuf: 'protobufjs'
+		protobufjs: 'protobuf'
 	},
 	entry: [
 		'./src/index',
-		// './public/css/main.css'
+		'./public/css/main.css'
 	],
 	output: {
 		path: path.join(__dirname, '/dist'),
@@ -25,7 +20,7 @@ module.exports = {
 
 	// ...you'll probably need to configure the usual Webpack fields like "mode" and "entry", too.
 	resolve: {
-		extensions: [".ts", ".tsx", ".js", ".jsx"],
+		extensions: [".ts", ".tsx", ".js", ".jsx", ".css"],
 	},
 	module: {
 		rules: [
@@ -85,26 +80,26 @@ module.exports = {
 					}
 				}
 			},
-			// {
-			//   test: /\.css$/i,
-			//   use: [
-			//     MiniCssExtractPlugin.loader,
-			//     'css-loader',
-			//     {
-			//       loader: 'postcss-loader',
-			//       options: {
-			//         postcssOptions: {
-			//           plugins: [
-			//             require('tailwindcss'),
-			//             require('autoprefixer'),
-			//             require('postcss-import'),
-			//           ],
-			//         },
-			//       },
-			//     },
-			//   ],
-			// },
-		]
+			{
+				test: /\.css$/i,
+				use: [
+				  MiniCssExtractPlugin.loader,
+				  'css-loader',
+				  {
+					loader: 'postcss-loader',
+					options: {
+					  postcssOptions: {
+						plugins: [
+						  require('tailwindcss'),
+						  require('autoprefixer'),
+						  require('postcss-import'),
+						],
+					  },
+					},
+				  },
+				],
+			  },
+		  ]
 	},
 	optimization: {
 		minimize: true,
@@ -118,7 +113,7 @@ module.exports = {
 		// new HtmlWebpackPlugin({
 		// 	template: 'dist/index.html'
 		// }),
-		// new MiniCssExtractPlugin(),
+		new MiniCssExtractPlugin(),
 		new WebpackAnalyzer()
 	],
 	devtool: (process.env.INLINE_SOURCE_MAP === "true") ? 'inline-source-map' : 'hidden-source-map'

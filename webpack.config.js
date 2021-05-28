@@ -15,7 +15,7 @@ module.exports = {
 	entry: [
 		'webpack-dev-server/client?https://discord.patrykstyla.com:8080',
 		'./src/index',
-		// './public/css/main.css'
+		'./public/css/main.css'
 	],
 	output: {
 		path: path.join(__dirname, '/dist'),
@@ -24,7 +24,7 @@ module.exports = {
 	},
 	devServer: {
 		headers: { "Access-Control-Allow-Origin": "*" },
-		host: '172.31.35.212',
+		host: '51.75.163.201',
 		https: true,
 		compress: true,
 		disableHostCheck: true,
@@ -54,7 +54,7 @@ module.exports = {
 	},
 	// ...you'll probably need to configure the usual Webpack fields like "mode" and "entry", too.
 	resolve: {
-		extensions: [".ts", ".tsx", ".js", ".jsx"],
+		extensions: [".ts", ".tsx", ".js", ".jsx", ".css"],
 		alias: {
 			  'react-dom': '@hot-loader/react-dom',
 		}
@@ -119,25 +119,25 @@ module.exports = {
 					}
 				}
 			},
-			// {
-			//   test: /\.css$/i,
-			//   use: [
-			//     MiniCssExtractPlugin.loader,
-			//     'css-loader',
-			//     {
-			//       loader: 'postcss-loader',
-			//       options: {
-			//         postcssOptions: {
-			//           plugins: [
-			//             require('tailwindcss'),
-			//             require('autoprefixer'),
-			//             require('postcss-import'),
-			//           ],
-			//         },
-			//       },
-			//     },
-			//   ],
-			// },
+			{
+			  test: /\.css$/i,
+			  use: [
+			    MiniCssExtractPlugin.loader,
+			    'css-loader',
+			    {
+			      loader: 'postcss-loader',
+			      options: {
+			        postcssOptions: {
+			          plugins: [
+			            require('tailwindcss'),
+			            require('autoprefixer'),
+			            require('postcss-import'),
+			          ],
+			        },
+			      },
+			    },
+			  ],
+			},
 		]
 	},
 	optimization: {
